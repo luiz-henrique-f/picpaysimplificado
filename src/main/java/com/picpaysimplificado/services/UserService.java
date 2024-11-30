@@ -1,7 +1,7 @@
 package com.picpaysimplificado.services;
 
-import com.picpaysimplificado.domain.user.User;
-import com.picpaysimplificado.domain.user.UserType;
+import com.picpaysimplificado.domain.User.User;
+import com.picpaysimplificado.domain.User.UserType;
 import com.picpaysimplificado.dtos.UserDTO;
 import com.picpaysimplificado.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ public class UserService {
     private UserRepository repository;
 
     public void validTransaction(User sender, BigDecimal amount) throws Exception {
-        if(sender.getUserType() != UserType.MERCHANT){
+        if(sender.getUserType() == UserType.MERCHANT){
             throw new Exception("Usuário do tipo Lojista não está autorizado a realizar transação");
         }
 

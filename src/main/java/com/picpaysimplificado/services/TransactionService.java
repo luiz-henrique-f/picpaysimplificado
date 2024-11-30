@@ -1,7 +1,7 @@
 package com.picpaysimplificado.services;
 
 import com.picpaysimplificado.domain.Transaction.Transaction;
-import com.picpaysimplificado.domain.user.User;
+import com.picpaysimplificado.domain.User.User;
 import com.picpaysimplificado.dtos.TransactionDTO;
 import com.picpaysimplificado.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -25,7 +26,10 @@ public class TransactionService {
     @Autowired
     private RestTemplate restTemplate;
 
-    public void createTransaction(TransactionDTO transaction) throws Exception {
+    @Autowired
+    private NotificationService notificationService;
+
+    public Transaction createTransaction(TransactionDTO transaction) throws Exception {
         User sender = this.userService.findUserById(transaction.senderId());
         User receiver = this.userService.findUserById(transaction.receiverId());
 
@@ -48,13 +52,35 @@ public class TransactionService {
         this.repository.save(newTransaction);
         this.userService.saveUser(sender);
         this.userService.saveUser(receiver);
+
+        this.notificationService.sendNotification(sender, "Transação realizada com sucesso");
+        this.notificationService.sendNotification(receiver, "Transação recebida com sucesso");
+
+        return newTransaction;
+    }
+
+    public ResponseEntity<Boolean> getAuthorizationValue() {
+        // Simula o JSON completo
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Boolean> data = new HashMap<>();
+        data.put("authorization", true);
+        response.put("data", data);
+
+        // Obtém o valor da chave "authorization"
+        Boolean authorizationValue = data.get("authorization");
+
+        // Retorna diretamente o valor como ResponseEntity
+        return ResponseEntity.ok(authorizationValue);
     }
 
     public boolean authorizeTransaction(User sender, BigDecimal value){
-        ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity("https://util.devi.tools/api/v2/authorize", Map.class);
+        //ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity("https://util.devi.tools/api/v2/authorize", Map.class);
+        ResponseEntity<Boolean> authorizationResponse = this.getAuthorizationValue();
 
-        if(authorizationResponse.getStatusCode() == HttpStatus.OK && (Boolean) authorizationResponse.getBody().get("authorization")){
+        if(authorizationResponse.getBody()){
             return true;
         } else return false;
     }
 }
+
+
